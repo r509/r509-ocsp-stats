@@ -30,8 +30,8 @@ module R509
                             :unknown => hits["UNKNOWN"].to_i,
                             :serials => []
                         }
-                        redis.del(issuer)
-                        redis.srem("stat-keys:issuer", issuer)
+                        redis.del(key)
+                        redis.srem("stat-keys:issuer", key)
                     end
 
                     redis.smembers("stat-keys:issuer+serial").each do |key|
