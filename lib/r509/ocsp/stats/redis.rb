@@ -21,8 +21,9 @@ module R509
 
                 def retrieve
                     issuers = Hash.new{|hash,key| hash[key] = {:valid=>0,:revoked=>0,:unknown=>0,:serials=>[]}}
-                    redis.smembers("stat-keys:issuer").each do |issuer|
-                        hits = redis.hgetall(issuer)
+                    redis.smembers("stat-keys:issuer").each do |key|
+                        hits = redis.hgetall(key)
+                        issuer = key.gsub("stats:", "")
                         issuers[issuer] = {
                             :valid => hits["VALID"].to_i,
                             :revoked => hits["REVOKED"].to_i,
