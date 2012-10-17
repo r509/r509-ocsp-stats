@@ -66,6 +66,35 @@ describe R509::Ocsp::Stats::Redis do
             results.should == {}
         end
 
+        it "issuer key starts with stats:" do
+            @redis.should_receive(:smembers).with("stat-keys:issuer").and_return(["stats:issuer1"])
+            @redis.should_receive(:hgetall).with("stats:issuer1").and_return({"VALID"=>"1","REVOKED"=>"2","UNKNOWN"=>"3"})
+            @redis.should_receive(:del).with("stats:issuer1")
+            @redis.should_receive(:srem).with("stat-keys:issuer", "stats:issuer1")
+
+            @redis.should_receive(:smembers).with("stat-keys:issuer+serial").and_return(["issuer1+serial1"])
+            @redis.should_receive(:hgetall).with("issuer1+serial1").and_return({"issuer"=>"issuer1","serial"=>"serial1","VALID"=>"4","REVOKED"=>"5","UNKNOWN"=>"6"})
+            @redis.should_receive(:del).with("issuer1+serial1")
+            @redis.should_receive(:srem).with("stat-keys:issuer+serial", "issuer1+serial1")
+
+            results = @stats.retrieve
+            results.should == {
+                "issuer1" => {
+                    :valid => 1,
+                    :revoked => 2,
+                    :unknown => 3,
+                    :serials => [
+                        {
+                            :serial => "serial1",
+                            :valid => 4,
+                            :revoked => 5,
+                            :unknown => 6
+                        }
+                    ]
+                }
+            }
+        end
+
         it "has 1 issuer and 1 serial, all valid/revoked/unknown are present" do
             @redis.should_receive(:smembers).with("stat-keys:issuer").and_return(["issuer1"])
             @redis.should_receive(:hgetall).with("issuer1").and_return({"VALID"=>"1","REVOKED"=>"2","UNKNOWN"=>"3"})
